@@ -1,0 +1,54 @@
+SELECT	
+        m.wise_designation, m.wise_ra, m.wise_dec,	
+        o.ObjID as PS1_ObjID,x.ra as ps_ra,x.dec as ps_dec,	
+        o.gMeanPSFMag, o.gMeanPSFMagErr, o.gMeanKronMag, o.gMeanApMag,	
+        o.rMeanPSFMag, o.rMeanPSFMagErr, o.rMeanKronMag, o.rMeanApMag,	
+        o.iMeanPSFMag, o.iMeanPSFMagErr, o.iMeanKronMag, o.iMeanApMag,	
+        o.zMeanPSFMag, o.zMeanPSFMagErr, o.zMeanKronMag, o.zMeanApMag,	
+        o.yMeanPSFMag, o.yMeanPSFMagErr, o.yMeanKronMag, o.yMeanApMag,	
+        o.gMeanPSFmagNpt,o.rMeanPSFmagNpt,o.iMeanPSFmagNpt,o.zMeanPSFmagNpt,o.yMeanPSFmagNpt,	
+        o.gFlags, o.gQfPerfect,	
+        o.rFlags, o.rQfPerfect,	
+        o.iFlags, o.iQfPerfect,	
+            
+        o.zFlags, o.zQfPerfect,	
+        o.yFlags, o.yQfPerfect,	
+        sp.gpetRadius,sp.rpetRadius,sp.ipetRadius,sp.zpetRadius,sp.ypetRadius,	
+        sot.iinfoFlag, sot.iinfoFlag2	
+            	
+        from mydb.wise_2mass_jkw2_colorcut AS m	
+            
+        CROSS APPLY (SELECT lowast FROM dbo.fGetNearestObjEq(m.wise_ra,m.wise_dec,0.066)) AS x	
+        JOIN MeanObject o on o.ObjID = x.ObjId	
+            
+        LEFT JOIN StackPetrosian AS sp ON sp.objID = o.objID	
+        LEFT JOIN StackObjectThin AS sot ON sot.objID = o.objID	
+            
+        WHERE (o.iMeanPSFMag > 0 AND o.iMeanPSFMag <= 19.0)	
+        AND o.zMeanPSFMag > 0	
+        AND o.yMeanPSFMag > 0	
+        AND o.iQfPerfect >= 0.85 and o.zQfPerfect >= 0.85	
+        --- rejects extended objects	
+        AND (-0.3 <= iMeanPSFMag - iMeanApMag OR iMeanPSFMag - iMeanApMag <= 0.3)	
+        --- photometric quality criteria	
+        AND (sot.iinfoFlag & 0x00000008 = 0) ---FAIL	
+        AND (sot.iinfoFlag & 0x00000010 = 0) ---POOR/POORFIT	
+        AND (sot.iinfoFlag & 0x00000020 = 0) ---PAIR	
+        AND (sot.iinfoFlag & 0x00000080 = 0) ---SATSTAR	
+        AND (sot.iinfoFlag & 0x00000100 = 0) ---BLEND	
+        AND (sot.iinfoFlag & 0x00000400 = 0) ---BADPSF	
+        AND (sot.iinfoFlag & 0x00000800 = 0) ---DEFECT	
+        AND (sot.iinfoFlag & 0x00001000 = 0) ---SATURATED	
+        AND (sot.iinfoFlag & 0x00002000 = 0) ---CR_LIMIT	
+        AND(sot.iinfoFlag & 0x00008000 = 0) ---MOMENTS_FAILURE	
+        AND (sot.iinfoFlag & 0x00010000 = 0) ---SKY_FAILURE	
+        AND (sot.iinfoFlag & 0x00020000 = 0) ---SKYVAR_FAILURE	
+        AND (sot.iinfoFlag & 0x00040000 = 0) ---MOMENTS_SN	
+        AND (sot.iinfoFlag & 0x00400000 = 0) ---BLEND_FIT	
+        AND (sot.iinfoFlag & 0x10000000 = 0) ---SIZE_SKIPPED	
+        AND (sot.iinfoFlag & 0x20000000 = 0) ---ON_SPIKE	
+        AND (sot.iinfoFlag & 0x40000000 = 0) ---ON_GHOST	
+        AND (sot.iinfoFlag & 0x80000000 = 0) ---OFF_CHIP	
+        AND (sot.iinfoFlag2 & 0x00000008 = 0) ---ON_SPIKE	
+        AND (sot.iinfoFlag2 & 0x00000010 = 0) ---ON_STARCORE	
+        AND (sot.iinfoFlag2 & 0x00000020 = 0) ---ON_BURNTOOL
