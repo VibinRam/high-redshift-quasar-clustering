@@ -40,11 +40,12 @@ nz_arrays = []
 
 # defining the luminosity bin
 min_lum = 1e11
-max_lum = np.infty
+max_lum = 1e12
 
 # format the min_lum in order to use in plot and file names.
 # Convert the number to scientific notation and replace 'e+' with 'e'
 formatted_min_lum = "{:.0e}".format(min_lum).replace('e+0', 'e').replace('e+','e')
+formatted_max_lum = "{:.0e}".format(max_lum).replace('e+0', 'e').replace('e+','e')
 
 BH_density = []
 
@@ -224,7 +225,7 @@ for i, r in enumerate(new_z_axis):
         plane_points = trans_plane_points(normal_vector, plane_points)
 
 # Save the lightcone to a file
-np.save(DATA_DIRECTORY + 'Lightcone_lumcut{}.npy'.format(formatted_min_lum), Lightcone)    
+np.save(DATA_DIRECTORY + 'Lightcone_lumcut{}{}.npy'.format(formatted_min_lum, formatted_max_lum), Lightcone)    
 
 # Calculate the number density on lightcone
 number_density = np.sum(Lightcone, axis=(0, 1)) / volume
@@ -261,7 +262,7 @@ plt.xticks(red_com, redshifts + 1)
 plt.xlabel('z + 1')
 
 # Save the figure to the plots directory
-plt.savefig(PLOT_DIRECTORY + 'NumberDensityLightcone_lumcut{}.pdf'.format(formatted_min_lum))
+plt.savefig(PLOT_DIRECTORY + 'NumberDensityLightcone_lumcut{}{}.pdf'.format(formatted_min_lum, formatted_max_lum))
 
 plt.show()
 
@@ -326,7 +327,7 @@ ax2.set_xlim(ax.get_xlim())
 ax2.set_xlabel(r'comoving distance ($h^{-1}$cMpc)')
 
 # Save the figure to a pdf file
-plt.savefig(PLOT_DIRECTORY + 'Lightcone2d_lumcut{}.pdf'.format(formatted_min_lum))
+plt.savefig(PLOT_DIRECTORY + 'Lightcone2d_lumcut{}{}.pdf'.format(formatted_min_lum, formatted_max_lum))
 
 plt.show()
 
@@ -372,4 +373,4 @@ bh_coordinates = np.array(bh_coordinates)
 # I want to save the numpy array to a file using np.save() function.
 
 # Save the bh_coordinates to a file
-np.save(DATA_DIRECTORY + 'bh_coordinates_lightcone_lumcut{}_v3.npy'.format(formatted_min_lum), bh_coordinates)
+np.save(DATA_DIRECTORY + 'bh_coordinates_lightcone_lumcut{}{}.npy'.format(formatted_min_lum, formatted_max_lum), bh_coordinates)
