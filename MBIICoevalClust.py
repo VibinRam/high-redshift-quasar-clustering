@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 from astropy.cosmology import FlatLambdaCDM
 # Import the DD function from Corrfunc
 from Corrfunc.theory.DD import DD
+from matplotlib.patches import Rectangle
+from pandas import DataFrame
 
 plt.style.use('MNRAS_Style.mplstyle')
 
@@ -42,7 +44,7 @@ for i,file_path in enumerate(file_paths):
     z_coordinates = data[:, 3]
 
     # Define the number of black holes to choose for the subset
-    num_black_holes = 10000
+    num_black_holes = 100000
 
     # randomly draw num_black_holes from the bh_coordinates
     if num_black_holes > x_coordinates.shape[0]:
@@ -101,8 +103,6 @@ for i,file_path in enumerate(file_paths):
     pois_err = ma.array(pois_err)
     pois_err[nil_pos] = ma.masked
 
-    from pandas import DataFrame
-
     df = DataFrame({"r min":bins[0:-1], "r max":bins[1:], "DD count":DD_count, "DR count":DR_count, "RR count": RR_count, "Landy Szalay":LandSzal2pcf, "Pois Error":pois_err})
 
     #Save the data to a file
@@ -118,9 +118,12 @@ plt.style.use('MNRAS_Style.mplstyle')
 for i in range(len(redshifts)):
     corrfunc_data[i]['r mid'] = (corrfunc_data[i]['r min'] + corrfunc_data[i]['r max']) / 2
 
+# Make an array to store the plot objects
+plot_objects = np.zeros(len(redshifts), dtype=object)   
+
 # Plot all the correlation functions
 for i in range(len(redshifts)):
-    plt.errorbar(corrfunc_data[i]['r mid'][:-3], corrfunc_data[i]['Landy Szalay'][:-3], yerr=corrfunc_data[i]['Pois Error'][:-3], label='z = {}'.format(redshifts[i]), fmt='.-', markersize=5, capsize=5)
+    plot_objects[i] = plt.errorbar(corrfunc_data[i]['r mid'][:-3], corrfunc_data[i]['Landy Szalay'][:-3], yerr=corrfunc_data[i]['Pois Error'][:-3], fmt='.-', markersize=5, capsize=5)
 
 plt.ylabel(r'$\xi(r)$')
 plt.xlabel(r'r ($h^{-1}$ Mpc)')
@@ -141,11 +144,31 @@ MBII_fig25_r0 = MBII_fig25[:, 1]
 
 MBII_gamma = 2.0
 
+# Make another array to store the plot objects
+plot_objects_khandai = np.zeros(len(MBII_fig25_z[5:]), dtype=object)
+
 for i in range(len(MBII_fig25_z[5:])):
-    plt.plot(temp_rmid, (temp_rmid/MBII_fig25_r0[i+5])**(-MBII_gamma), label='Khandai z = {}'.format(np.round(MBII_fig25_z[i+5]), 2))
+    plot_objects_khandai[i], = plt.plot(temp_rmid, (temp_rmid/MBII_fig25_r0[i+5])**(-MBII_gamma))
+
+# Make title proxy
+title_proxy = Rectangle((0,0), 0, 0, color='w')
+
+# Make a list of the following form: [title_proxy, plot_objects_khandai[0], plot_objects_khandai[1], ..., plot_objects_khandai[n], title_proxy, plot_objects[0], plot_objects[1], ..., plot_objects[n]]
+legend_list = [title_proxy]
+legend_list.extend(plot_objects_khandai)
+legend_list.append(title_proxy)
+legend_list.extend(plot_objects)
+
+# Make a list to hold the labels for the legend like: ['Khandai et al. 2015', 'z = 4', ... , 'z = 6', 'This work', 'z = 4', ... , 'z = 10']
+legend_labels = ['Khandai et al. 2015']
+legend_labels.extend(['z = {}'.format(int(np.round(MBII_fig25_z[i+5]))) for i in range(len(MBII_fig25_z[5:]))])
+legend_labels.append('This work')
+legend_labels.extend(['z = {}'.format(redshifts[i]) for i in range(len(redshifts))])
 
 # give legends outside the plots
-plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+plt.legend(legend_list, legend_labels, loc='center left', bbox_to_anchor=(1, 0.5))
+plt.grid(visible=False)
+plt.gca().set_box_aspect(1)
 
 # Save the plot as a pdf file
 PLOT_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots/"
