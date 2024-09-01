@@ -21,6 +21,9 @@ h = 0.7
 # Define the path to data directory
 DATA_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/"
 
+# Save the plot as a pdf file
+PLOT_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots/"
+
 
 file_paths = ['/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/bhprops_034.txt',
               '/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/bhprops_029.txt',
@@ -66,7 +69,7 @@ for i,file_path in enumerate(file_paths):
     min_z = 0
     max_z = 100
 
-    mult = 10 ## Number of random points used as a multiple of number of data points
+    mult = 50 ## Number of random points used as a multiple of number of data points
 
     n_D = len(bh_pos_x)
     n_rand = mult * n_D
@@ -169,9 +172,6 @@ legend_labels.extend(['z = {}'.format(redshifts[i]) for i in range(len(redshifts
 plt.legend(legend_list, legend_labels, loc='center left', bbox_to_anchor=(1, 0.5))
 plt.grid(visible=False)
 plt.gca().set_box_aspect(1)
-
-# Save the plot as a pdf file
-PLOT_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots/"
 
 plt.savefig(PLOT_DIRECTORY + 'MBII_corrfunc.pdf')
 

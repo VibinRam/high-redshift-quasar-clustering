@@ -10,7 +10,7 @@ from Corrfunc.theory.DD import DD
 from sklearn.neighbors import KernelDensity
 
 # define the Data directory
-DATA_DIRECTORY = '/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/'
+DATA_DIRECTORY = '/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/'
 # define the Plot directory
 PLOT_DIRECTORY = '/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots/'
 
@@ -93,7 +93,7 @@ for i in range(7):
     min_y = 0
     max_y = 100
 
-    mult = 20 ## Number of random points used as a multiple of number of data points
+    mult = 50 ## Number of random points used as a multiple of number of data points
 
     n_D = len(x_coordinates_sub)
     n_rand = mult * n_D
@@ -163,6 +163,7 @@ for i in range(7):
     df.to_csv(DATA_DIRECTORY + 'MBII_lc_corrfunc_z{}.csv'.format(redshifts[i]), index=False)
 
     corrfunc_data.append(df)
+    print("Correlation function at redshift {} done.".format(redshifts[i]))
 
 # Plot the correlation function
 plt.style.use('MNRAS_Style.mplstyle')
@@ -174,9 +175,11 @@ plt.ylabel(r'$\xi(r)$')
 plt.xlabel(r'r ($h^{-1}$ Mpc)')
 # plt.ylim(-0.5, 10)
 # plt.xlim(0, 150)
-plt.legend()
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 plt.xscale('log')
 plt.yscale('log')
+plt.grid(visible=False)
+plt.gca().set_box_aspect(1)
 
 # Save this plot as a pdf to Plot directory
 plt.savefig(PLOT_DIRECTORY + 'MBII_lc_corrfunc.pdf')
