@@ -37,6 +37,10 @@ redshifts = np.array([4, 5, 6, 7, 8, 9, 10])
 
 corrfunc_data = []
 
+# defining the luminosity bin
+min_lum = 1e9
+max_lum = 1e12
+
 for i,file_path in enumerate(file_paths):
     # Load the data from the file
     data = np.loadtxt(file_path)
@@ -45,6 +49,17 @@ for i,file_path in enumerate(file_paths):
     x_coordinates = data[:, 1]
     y_coordinates = data[:, 2]
     z_coordinates = data[:, 3]
+    bh_lum = data[:, 8]
+
+    # I want to introduce luminosity cuts at this point
+    bh_lum_sol = bh_lum * 1.472 * 10 ** 12 # 1 M0/yr * 0.1 * c^2 equvialent to 1.472 x 10^12 L0
+
+    # now get the indices of the black holes that are within the luminosity range
+    ind_lum = np.where((bh_lum_sol >= min_lum) & (bh_lum_sol < max_lum))[0]
+
+    x_coordinates = x_coordinates[ind_lum]
+    y_coordinates = y_coordinates[ind_lum]
+    z_coordinates = z_coordinates[ind_lum]  
 
     # Define the number of black holes to choose for the subset
     num_black_holes = 100000
@@ -109,7 +124,7 @@ for i,file_path in enumerate(file_paths):
     df = DataFrame({"r min":bins[0:-1], "r max":bins[1:], "DD count":DD_count, "DR count":DR_count, "RR count": RR_count, "Landy Szalay":LandSzal2pcf, "Pois Error":pois_err})
 
     #Save the data to a file
-    df.to_csv(DATA_DIRECTORY + 'MBII_corrfunc_z{}.csv'.format(redshifts[i]), index=False)
+    df.to_csv(DATA_DIRECTORY + 'MBII_1e91e12_corrfunc_z{}.csv'.format(redshifts[i]), index=False)
 
     corrfunc_data.append(df)
 
@@ -173,6 +188,6 @@ plt.legend(legend_list, legend_labels, loc='center left', bbox_to_anchor=(1, 0.5
 plt.grid(visible=False)
 plt.gca().set_box_aspect(1)
 
-plt.savefig(PLOT_DIRECTORY + 'MBII_corrfunc.pdf')
+plt.savefig(PLOT_DIRECTORY + 'MBII_1e91e12_corrfunc.pdf')
 
 plt.show()
