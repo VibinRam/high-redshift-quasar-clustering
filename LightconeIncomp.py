@@ -87,6 +87,9 @@ imag_max = np.max(Richards2006SelectionFunc['imag'])
 # Make 3 bins out of the range of imag values.
 imag_bins = np.linspace(imag_min, imag_max, 4)
 
+# This array will store the selection function values for each imag bin and redshift.
+selection_func_values = np.zeros((len(imag_bins) - 1, len(np.unique(Richards2006SelectionFunc['z']))))
+
 for i in range(len(imag_bins) - 1):
     # choose only the data with imag that are within the imag_min and imag_max values.
     Richards2006SelectionFunc_lumbin = Richards2006SelectionFunc[(Richards2006SelectionFunc['imag'] >= imag_bins[i]) & (Richards2006SelectionFunc['imag'] <= imag_bins[i + 1])]
@@ -100,13 +103,20 @@ for i in range(len(imag_bins) - 1):
     # Add another column to the Richards2006SelectionFunc_lumbin_grouped_avg table that contains the comoving distance corresponding to each redshift.
     Richards2006SelectionFunc_lumbin_grouped_avg['comoving_distance'] = cosmo.comoving_distance(Richards2006SelectionFunc_lumbin_grouped_avg['z']).value * h
 
+    selection_func_values[i] = Richards2006SelectionFunc_lumbin_grouped_avg['point']
+
     # Now multiply the Lightcone1e91e10[:,:,z] by the corresponding nearest value in the Richards2006SelectionFunc_lumbin_grouped_avg['point'].
-    for j, z in enumerate(new_z_axis):
+    for j, z in enumerate(new_z_axis): 
         Lightcones_inc[i][:,:,j] = Lightcones[i][:,:,j] * \
         Richards2006SelectionFunc_lumbin_grouped_avg['point'][np.abs(Richards2006SelectionFunc_lumbin_grouped_avg['comoving_distance'] - z).argmin()]
 
     # Plot the point values as a function of redshift.
     plt.plot(Richards2006SelectionFunc_lumbin_grouped_avg['z'], Richards2006SelectionFunc_lumbin_grouped_avg['point'], '.-', linewidth=0.6, markersize=0.7, label=str(round(imag_bins[i],2)) + ' to ' + str(round(imag_bins[i + 1],2)))
+
+# Save the incomplete lightcones as numpy arrays.
+np.save(DATA_DIRECTORY + 'Lightcone_lumcut1e91e10_sheninc.npy', Lightcone1e91e10_inc)
+np.save(DATA_DIRECTORY + 'Lightcone_lumcut1e101e11_sheninc.npy', Lightcone1e101e11_inc)
+np.save(DATA_DIRECTORY + 'Lightcone_lumcut1e111e12_sheninc.npy', Lightcone1e111e12_inc)
 
 plt.xlim(4, 10.1)
 plt.ylim(0, 1.05)
@@ -118,6 +128,23 @@ plt.gca().set_box_aspect(1)
 
 # Save the plot as a pdf file.
 plt.savefig(PLOT_DIRECTORY + 'CompletenessVsRedshift.pdf', bbox_inches='tight')
+
+# Make a 2d plot of the selection function values.
+
+bolo_min = 1e9
+bolo_max = 1e12
+
+plt.figure()
+plt.imshow(selection_func_values, extent=[4, 10, bolo_min, bolo_max], aspect='auto')
+plt.colorbar(label='Completeness')
+plt.xlabel('Redshift')
+plt.ylabel(r'$i_{\mathrm{mag}}$')
+plt.grid(visible=False)
+plt.gca().set_box_aspect(1)
+
+# Save the plot as a pdf file.
+plt.savefig(PLOT_DIRECTORY + 'CompletenessVsRedshift_bolo.pdf', bbox_inches='tight')
+plt.show()
 
 # Making the catalog of the lightcones
 # Initialize an empty list to store the black hole coordinates
