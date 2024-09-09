@@ -19,7 +19,7 @@ cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 h = 0.7
 
 # Import the lightcone data
-Lightcone = np.load('/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/bh_coordinates_lightcone_v3.npy')
+Lightcone = np.load('/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/bh_coordinates_lightcone_lumcut1e91e12.npy')
 
 # Extract the black hole coordinates
 x_coordinates = Lightcone[:, 0]
@@ -160,7 +160,7 @@ for i in range(7):
     df = DataFrame({"r min":bins[0:-1], "r max":bins[1:], "DD count":DD_count, "DR count":DR_count, "RR count": RR_count, "Landy Szalay":LandSzal2pcf, "Pois Error":pois_err})
 
     #Save the data to a file
-    df.to_csv(DATA_DIRECTORY + 'MBII_lc_corrfunc_z{}.csv'.format(redshifts[i]), index=False)
+    df.to_csv(DATA_DIRECTORY + 'MBII_lc1e91e12_corrfunc_z{}.csv'.format(redshifts[i]), index=False)
 
     corrfunc_data.append(df)
     print("Correlation function at redshift {} done.".format(redshifts[i]))
@@ -182,4 +182,4 @@ plt.grid(visible=False)
 plt.gca().set_box_aspect(1)
 
 # Save this plot as a pdf to Plot directory
-plt.savefig(PLOT_DIRECTORY + 'MBII_lc_corrfunc.pdf')
+plt.savefig(PLOT_DIRECTORY + 'MBII_lc1e91e12_corrfunc.pdf')
