@@ -1,6 +1,11 @@
 from astropy.io import ascii
 import numpy as np
 import matplotlib.pyplot as plt
+from astropy.cosmology import FlatLambdaCDM
+
+# Define the cosmology
+cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+h = 0.7
 
 # Define the data directory
 DATA_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/"
@@ -37,8 +42,11 @@ for i in range(len(imag_bins) - 1):
     # Take the average of the selection function values for each redshift.
     Richards2006SelectionFunc_lumbin_grouped_avg = Richards2006SelectionFunc_lumbin_grouped.groups.aggregate(np.mean)
 
+    # Add another column to the Richards2006SelectionFunc_lumbin_grouped_avg table that contains the comoving distance corresponding to each redshift.
+    Richards2006SelectionFunc_lumbin_grouped_avg['comoving_distance'] = cosmo.comoving_distance(Richards2006SelectionFunc_lumbin_grouped_avg['z']).value * h
+
     # Plot the point values as a function of redshift.
-    plt.plot(Richards2006SelectionFunc_lumbin_grouped_avg['z'], Richards2006SelectionFunc_lumbin_grouped_avg['point'], '.-', linewidth=0.6, markersize=0.7, label=str(round(imag_bins[i],2)) + ' to ' + str(round(imag_bins[i + 1],2)))
+    plt.plot(Richards2006SelectionFunc_lumbin_grouped_avg['comoving_distance'], Richards2006SelectionFunc_lumbin_grouped_avg['point'], '.-', linewidth=0.6, markersize=0.7, label=str(round(imag_bins[i],2)) + ' to ' + str(round(imag_bins[i + 1],2)))
 
     selection_func_values[i] = Richards2006SelectionFunc_lumbin_grouped_avg['point']
 
@@ -54,7 +62,7 @@ for i, z in enumerate(np.unique(Richards2006SelectionFunc['z'])):
         selection_func_values_all[i, j] = Richards2006SelectionFunc_z_grouped_imag['point']
 
 
-plt.xlim(4, 10.1)
+# plt.xlim(4, 10.1)
 plt.ylim(0, 1.05)
 plt.xlabel('Redshift')
 plt.ylabel('Completeness')
@@ -63,11 +71,11 @@ plt.grid(visible=False)
 plt.gca().set_box_aspect(1)
 
 # Save the plot as a pdf file.
-plt.savefig(PLOT_DIRECTORY + 'CompletenessVsRedshift.pdf', bbox_inches='tight')
-plt.show()
+# plt.savefig(PLOT_DIRECTORY + 'CompletenessVsRedshift.pdf', bbox_inches='tight')
+# plt.show()
 
 # Make a 2d plot of the selection function values.
-plt.figure()
+plt.figure(figsize=(6, 6))
 plt.imshow(selection_func_values, extent=[4, 10, imag_min, imag_max], aspect='auto')
 plt.colorbar(label='Completeness')
 plt.xlabel('Redshift')
@@ -76,8 +84,8 @@ plt.grid(visible=False)
 plt.gca().set_box_aspect(1)
 
 # Save the plot as a pdf file.
-plt.savefig(PLOT_DIRECTORY + 'CompletenessVsRedshift_imag.pdf', bbox_inches='tight')
-plt.show()
+plt.savefig(PLOT_DIRECTORY + 'CompletenessVsRedshift_imag.pdf', bbox_inches='tight', dpi=300)
+# plt.show()
 
 z_min = np.min(Richards2006SelectionFunc['z'])
 z_max = np.max(Richards2006SelectionFunc['z'])
@@ -85,7 +93,7 @@ imag_min = np.min(Richards2006SelectionFunc['imag'])
 imag_max = np.max(Richards2006SelectionFunc['imag'])
 
 # Make a 2d plot of the selection function values.
-plt.figure()
+plt.figure(figsize=(6, 6))
 plt.imshow(selection_func_values_all.T, extent=[z_min, z_max, imag_min, imag_max], aspect='auto', vmin=0, vmax=1)
 plt.colorbar(label='Completeness')
 plt.xlabel('Redshift')
@@ -94,6 +102,23 @@ plt.grid(visible=False)
 plt.gca().set_box_aspect(1)
 
 # Save the plot as a pdf file.
-plt.savefig(PLOT_DIRECTORY + 'CompletenessVsRedshift_imag_all.pdf', bbox_inches='tight')
+plt.savefig(PLOT_DIRECTORY + 'CompletenessVsRedshift_imag_all.pdf', bbox_inches='tight', dpi=300)
+# plt.show()
+
+# Make a 2d plot of the selection function values.
+
+bolo_min = 1e9
+bolo_max = 1e12
+
+plt.figure(figsize=(6, 6))
+plt.imshow(selection_func_values, extent=[4, 10, bolo_min, bolo_max], aspect='auto')
+plt.colorbar(label='Completeness')
+plt.xlabel('Redshift')
+plt.ylabel(r'$i_{\mathrm{mag}}$')
+plt.grid(visible=False)
+plt.gca().set_box_aspect(1)
+
+# Save the plot as a pdf file.
+plt.savefig(PLOT_DIRECTORY + 'CompletenessVsRedshift_bolo.pdf', bbox_inches='tight', dpi=300)
 plt.show()
 
