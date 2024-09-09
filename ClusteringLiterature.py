@@ -68,3 +68,22 @@ plt.tight_layout()
 plt.savefig(PLOT_DIRECTORY + 'ClusteringLiterature.pdf')
 
 plt.show()
+
+# Make another plot where the correlation function is plotted. \xi(r) = (r/r_0)^{-\gamma}. Plot it such that each unique name appears as a legend title
+# and the redshifts are the labels for the data points.
+fig, ax = plt.subplots(1, 1, figsize=(6, 5))
+for i in range(len(paper_name_unique)):
+    for j in range(len(red_range_grouped[i])):
+        r = np.linspace(0.1, 100, 100)
+        xi = (r / clust_length_grouped[i][j,0])**(-clust_slope_grouped[i][j,0])
+        ax.plot(r, xi, label=paper_name_unique[i] + ' z = {}'.format(np.round((red_range_grouped[i][j,0] + red_range_grouped[i][j,1])/2), 2))
+
+ax.set_xlabel(r'r ($h^{-1}$ Mpc)')
+ax.set_ylabel(r'$\xi(r)$')
+ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+ax.set_xscale('log')
+ax.set_yscale('log')
+ax.grid(visible=False)
+ax.set_box_aspect(1)
+
+plt.show()
