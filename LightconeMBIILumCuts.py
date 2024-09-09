@@ -39,7 +39,7 @@ file_paths = ['/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/bhpr
 nz_arrays = []
 
 # defining the luminosity bin
-min_lum = 1e11
+min_lum = 1e9
 max_lum = 1e12
 
 # format the min_lum in order to use in plot and file names.
