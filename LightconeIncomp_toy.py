@@ -9,17 +9,25 @@ import numpy.ma as ma
 from Corrfunc.theory.DD import DD
 from sklearn.neighbors import KernelDensity
 from astropy.io import ascii
+import sys
+
+# Unique id for input and output files
+unique_id = sys.argv[1]
 
 # Define the  gaussian function
 def invert_gaussian2(x, mu1, sig1, gaus_peak1, mu2, sig2, gaus_peak2):
     return 1 - gaus_peak1 * np.exp(-np.power(x - mu1, 2.) / (2 * np.power(sig1, 2.))) - gaus_peak2 * np.exp(-np.power(x - mu2, 2.) / (2 * np.power(sig2, 2.)))
 def invert_gaussian(x, mu, sig, gaus_peak):
     return 1 - gaus_peak * np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
+def lightcone_rounder(x):
+    return int(np.round(x + np.random.rand() - 0.5))
+# vectorize the function
+lightcone_rounder = np.vectorize(lightcone_rounder)
 
 # Define the data directory
-DATA_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/"
+DATA_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data2.0/"
 # define the Plot directory
-PLOT_DIRECTORY = '/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots/'
+PLOT_DIRECTORY = '/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots2.0/'
 
 # Define the plot style
 plt.style.use('MNRAS_Style.mplstyle')
@@ -29,12 +37,15 @@ cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 h = 0.7
 
 # Import the lightcone data
-Lightcone1e91e10 = np.load('/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/Lightcone_lumcut1e91e10.npy')
-Lightcone1e101e11 = np.load('/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/Lightcone_lumcut1e101e11.npy')
-Lightcone1e111e12 = np.load('/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/Lightcone_lumcut1e111e12.npy')
+Lightcone1e91e10 = np.load('/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/{}_Lightcone_lumcut1e91e10.npy'.format(unique_id))
+Lightcone1e101e11 = np.load('/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/{}_Lightcone_lumcut1e101e11.npy'.format(unique_id))
+Lightcone1e111e12 = np.load('/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/{}_Lightcone_lumcut1e111e12.npy'.format(unique_id))
 
 # Make a list of the lightcones
 Lightcones = [Lightcone1e91e10, Lightcone1e101e11, Lightcone1e111e12]
+
+# Extract the bolometric luminosity bins
+bol_bins = [[1e9, 1e10], [1e10, 1e11], [1e11, 1e12]]
 
 #----------------------------------------------------------------------------------------------------------------
 # This whole section is done in a similar way to when I was creating the lightcone.
@@ -81,25 +92,33 @@ Lightcone1e111e12_inc = np.zeros_like(Lightcone1e111e12)
 Lightcones_inc = [Lightcone1e91e10_inc, Lightcone1e101e11_inc, Lightcone1e111e12_inc]
 
 # Define the incompleteness function
-incomp_func1 = invert_gaussian(new_z_axis, 5442.76, 6, 0.8)
-incomp_func2 = incomp_func1
-incomp_func3 = incomp_func1
+incomp_func1 = np.ones_like(Lightcone1e91e10)
+incomp_func2 = np.ones_like(Lightcone1e101e11)
+incomp_func3 = np.ones_like(Lightcone1e111e12)
+
+incomp_func1[:] = np.ones_like(new_z_axis)
+incomp_func2 = np.copy(incomp_func1)
+incomp_func3 = np.copy(incomp_func1)
 
 incomp_func = [incomp_func1, incomp_func2, incomp_func3]
 
 for i in range(len(Lightcones)):
-    # Now multiply the Lightcone1e91e10[:,:,z] by the corresponding nearest value in the Richards2006SelectionFunc_lumbin_grouped_avg['point'].
-    for j, z in enumerate(new_z_axis): 
-        Lightcones_inc[i][:,:,j] = Lightcones[i][:,:,j] * \
-            incomp_func[i][j]
+    # Since we do linear interpolation, there are non integer values in the lightcone for total number of black holes. We need to
+    # round them to integers. Here I will try to round them with a probability of the decimal part of the number.
+    # This is done to make sure that the total number of black holes in the lightcone is the same as the original lightcone.
+    rounded_Lightcone = lightcone_rounder(Lightcones[i])
+
+    # Using the incomp_func arrays which are of the same shape as the lightcones, taking them as the probability in the binomial distribution.
+    # and the lightcones as the number of trials, we can get the incomplete lightcones.
+    Lightcones_inc[i] = np.random.binomial(rounded_Lightcone, incomp_func[i])
 
     # Plot the point values as a function of redshift. Give label of the lightcone. ex: 1e9 to 1e10
-    plt.plot(new_z_axis, incomp_func[i], '.-', linewidth=0.6, markersize=0.7, label=f'{1e9 * i*10:.0e} to {1e10 * i*10:.0e}')
+    plt.plot(new_z_axis, np.average(incomp_func[i], axis=(0,1)), '.-', linewidth=0.6, markersize=0.7, label=f'{bol_bins[i][0]:.0e} to {bol_bins[i][1]:.0e}')
 
 # Save the incomplete lightcones as numpy arrays.
-np.save(DATA_DIRECTORY + 'Lightcone_lumcut1e91e10_toy3inc.npy', Lightcone1e91e10_inc)
-np.save(DATA_DIRECTORY + 'Lightcone_lumcut1e101e11_toy3inc.npy', Lightcone1e101e11_inc)
-np.save(DATA_DIRECTORY + 'Lightcone_lumcut1e111e12_toy3inc.npy', Lightcone1e111e12_inc)
+np.save(DATA_DIRECTORY + '{}_Lightcone_lumcut1e91e10_toy0inc.npy'.format(unique_id), Lightcone1e91e10_inc)
+np.save(DATA_DIRECTORY + '{}_Lightcone_lumcut1e101e11_toy0inc.npy'.format(unique_id), Lightcone1e101e11_inc)
+np.save(DATA_DIRECTORY + '{}_Lightcone_lumcut1e111e12_toy0inc.npy'.format(unique_id), Lightcone1e111e12_inc)
 
 # plt.xlim(4, 10.1)
 # plt.ylim(0, 1.05)
@@ -110,15 +129,15 @@ plt.grid(visible=False)
 plt.gca().set_box_aspect(1)
 
 # Save the plot as a pdf file.
-plt.savefig(PLOT_DIRECTORY + 'CompletenessVsRedshift_toy3.pdf', bbox_inches='tight')
+plt.savefig(PLOT_DIRECTORY + '{}_CompletenessVsRedshift_toy0.pdf'.format(unique_id), bbox_inches='tight')
 
 # Make a 2d plot of the selection function values.
 
-bolo_min = 1e9
-bolo_max = 1e12
+bolo_min = bol_bins[0][0]
+bolo_max = bol_bins[-1][1]
 
 plt.figure()
-plt.imshow(np.array(incomp_func), extent=[4, 10, bolo_min, bolo_max], aspect='auto')
+plt.imshow(np.array(np.average(incomp_func, axis=(0,1))), extent=[4, 10, bolo_min, bolo_max], aspect='auto')
 plt.colorbar(label='Completeness')
 plt.xlabel('Redshift')
 plt.ylabel(r'$i_{\mathrm{mag}}$')
@@ -126,8 +145,8 @@ plt.grid(visible=False)
 plt.gca().set_box_aspect(1)
 
 # Save the plot as a pdf file.
-plt.savefig(PLOT_DIRECTORY + 'CompletenessVsRedshift_bolo_toy3.pdf', bbox_inches='tight')
-plt.show()
+plt.savefig(PLOT_DIRECTORY + '{}_CompletenessVsRedshift_bolo_toy0.pdf'.format(unique_id), bbox_inches='tight')
+# plt.show()
 
 # Making the catalog of the lightcones
 # Initialize an empty list to store the black hole coordinates
@@ -142,7 +161,7 @@ for ind in range(len(Lightcones)):
         for i in range(num_pixels_x):
             for j in range(num_pixels_y):
                 # Get the number of black holes in the current pixel
-                n = round(n_bh[i, j, k])
+                n = n_bh[i, j, k]
                 
                 # Generate random x, y, z coordinates for the black holes in the pixel
                 x_coords = np.random.uniform(low=pixel_centers_x[i] - pixel_size_x / 2, high=pixel_centers_x[i] + pixel_size_x / 2, size=n)
@@ -230,7 +249,7 @@ for i in range(7):
     min_y = 0
     max_y = 100
 
-    mult = 100 ## Number of random points used as a multiple of number of data points
+    mult = 50 ## Number of random points used as a multiple of number of data points
 
     n_D = len(x_coordinates_sub)
     n_rand = mult * n_D
@@ -243,7 +262,7 @@ for i in range(7):
     z_bin_size = 0.1
     z_bin = np.arange(np.min(z_coordinates_sub), np.max(z_coordinates_sub), z_bin_size)[:,np.newaxis]
     z_bin_mid = (z_bin + z_bin_size/2)[:-1]
-    kde = KernelDensity(kernel="gaussian", bandwidth=50).fit(z_coordinates_sub[:,np.newaxis])
+    kde = KernelDensity(kernel="gaussian", bandwidth=2).fit(z_coordinates_sub[:,np.newaxis])
     log_dens = kde.score_samples(z_bin_mid)
     pdf = np.exp(log_dens)
     # ax.fill(pos_z[:, 0], pdf, fc="#AAAAFF")
@@ -297,10 +316,11 @@ for i in range(7):
     df = DataFrame({"r min":bins[0:-1], "r max":bins[1:], "DD count":DD_count, "DR count":DR_count, "RR count": RR_count, "Landy Szalay":LandSzal2pcf, "Pois Error":pois_err})
 
     #Save the data to a file
-    df.to_csv(DATA_DIRECTORY + 'MBII_toy3inc_lc_corrfunc_z{}.csv'.format(redshifts[i]), index=False)
+    df.to_csv(DATA_DIRECTORY + '{}_MBII_toy0inc_lc_corrfunc_z{}.csv'.format(unique_id, redshifts[i]), index=False)
 
     corrfunc_data.append(df)
     print("Correlation function at redshift {} done.".format(redshifts[i]))
+    print("Number of data points: {}".format(n_D))
 
     # Plot the z_coordinates_sub histogram along with the rand_z histogram both normalized.
     plt.figure()
@@ -308,11 +328,11 @@ for i in range(7):
     plt.hist(rand_z, bins=50, density=True, alpha=0.5, label='Random')
     plt.xlabel('z')
     plt.ylabel('Normalized counts')
-    plt.legend()
+    plt.legend(title= 'z = {}'.format(redshifts[i]))
     plt.grid(visible=False)
     plt.gca().set_box_aspect(1)
-    plt.savefig(PLOT_DIRECTORY + 'MBII_toy3inc_lc_zhist_z{}.pdf'.format(redshifts[i]), bbox_inches='tight')
-    plt.show()
+    plt.savefig(PLOT_DIRECTORY + '{}_MBII_toy0inc_lc_zhist_z{}.pdf'.format(unique_id, redshifts[i]), bbox_inches='tight')
+    # plt.show()
 
 # Plot the correlation function
 plt.style.use('MNRAS_Style.mplstyle')
@@ -331,4 +351,4 @@ plt.grid(visible=False)
 plt.gca().set_box_aspect(1)
 
 # Save this plot as a pdf to Plot directory
-plt.savefig(PLOT_DIRECTORY + 'MBII_toy3inc_lc_corrfunc.pdf')
+plt.savefig(PLOT_DIRECTORY + '{}_MBII_toy0inc_lc_corrfunc.pdf'.format(unique_id))

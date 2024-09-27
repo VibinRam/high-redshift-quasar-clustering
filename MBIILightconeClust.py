@@ -8,23 +8,93 @@ from astropy.cosmology import FlatLambdaCDM
 import numpy.ma as ma
 from Corrfunc.theory.DD import DD
 from sklearn.neighbors import KernelDensity
+import sys
+
+# Unique id for the input and output files
+unique_id = sys.argv[1]
+
+def lightcone_rounder(x):
+    return int(np.round(x + np.random.rand() - 0.5))
+# vectorize the function
+lightcone_rounder = np.vectorize(lightcone_rounder)
 
 # define the Data directory
-DATA_DIRECTORY = '/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/'
+DATA_DIRECTORY = '/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data2.0/'
 # define the Plot directory
-PLOT_DIRECTORY = '/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots/'
+PLOT_DIRECTORY = '/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots2.0/'
 
 # define the cosmology
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 h = 0.7
 
+#----------------------------------------------------------------------------------------------------------------
+# This whole section is done in a similar way to when I was creating the lightcone.
+
+# Define the number of pixels in each dimension
+num_pixels_x = 50
+num_pixels_y = 50
+num_pixels_z = 50
+
+# Calculate the pixel size in each dimension in Mpch^-1
+x_range = (0, 100) #(np.min(x_coordinates), np.max(x_coordinates))
+y_range = (0, 100) #(np.min(y_coordinates), np.max(y_coordinates))
+z_range = (0, 100) #(np.min(z_coordinates), np.max(z_coordinates))
+
+pixel_size_x = (x_range[1] - x_range[0]) / num_pixels_x
+pixel_size_y = (y_range[1] - y_range[0]) / num_pixels_y
+pixel_size_z = pixel_size_x
+
+# Define the redshifts.
+redshifts = np.array([4, 5, 6, 7, 8, 9, 10])
+
+# Calculate the comoving distances
+new_z_axis = cosmo.comoving_distance(redshifts).value * h  # Convert to h^-1 Mpc
+
+# Define the redshifts for each slice of the lightcone.
+new_z_axis = np.arange(new_z_axis[0], new_z_axis[-1], pixel_size_z)
+
+# Calculate the number of slices
+new_num_slices = len(new_z_axis)
+
+# Define the pixel centers
+pixel_centers_x = np.linspace(x_range[0] + pixel_size_x / 2, x_range[1] - pixel_size_x / 2, num_pixels_x)
+pixel_centers_y = np.linspace(y_range[0] + pixel_size_y / 2, y_range[1] - pixel_size_y / 2, num_pixels_y)
+pixel_centers_z = np.copy(new_z_axis)
+
+#--------------------------------------------------------------------------------------------------------------
+
 # Import the lightcone data
-Lightcone = np.load('/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/bh_coordinates_lightcone_lumcut1e91e12.npy')
+Lightcone = np.load('/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/{}_Lightcone_lumcut1e91e12.npy'.format(unique_id))
+
+# Making the catalog of the lightcone
+# Define the number of black holes in each pixel
+n_bh = np.copy(lightcone_rounder(Lightcone))
+
+# Initialize an empty list to store the black hole coordinates
+bh_coordinates = []
+
+# Iterate over the pixels and distribute the black holes
+for k in range(new_num_slices):
+    for i in range(num_pixels_x):
+        for j in range(num_pixels_y):
+            # Get the number of black holes in the current pixel
+            n = n_bh[i, j, k]
+            
+            # Generate random x, y, z coordinates for the black holes in the pixel
+            x_coords = np.random.uniform(low=pixel_centers_x[i] - pixel_size_x / 2, high=pixel_centers_x[i] + pixel_size_x / 2, size=n)
+            y_coords = np.random.uniform(low=pixel_centers_y[j] - pixel_size_y / 2, high=pixel_centers_y[j] + pixel_size_y / 2, size=n)
+            z_coords = np.random.uniform(low=pixel_centers_z[k] - pixel_size_z / 2, high=pixel_centers_z[k] + pixel_size_z / 2, size=n)
+            
+            # Append the coordinates to the list
+            bh_coordinates.extend(list(zip(x_coords, y_coords, z_coords)))
+
+# Convert the list of coordinates to a numpy array
+bh_coordinates = np.array(bh_coordinates)
 
 # Extract the black hole coordinates
-x_coordinates = Lightcone[:, 0]
-y_coordinates = Lightcone[:, 1]
-z_coordinates = Lightcone[:, 2]
+x_coordinates = bh_coordinates[:, 0]
+y_coordinates = bh_coordinates[:, 1]
+z_coordinates = bh_coordinates[:, 2]
 
 x_coordinates_array = [0]*7
 y_coordinates_array = [0]*7
@@ -106,7 +176,7 @@ for i in range(7):
     z_bin_size = 0.1
     z_bin = np.arange(np.min(z_coordinates_sub), np.max(z_coordinates_sub), z_bin_size)[:,np.newaxis]
     z_bin_mid = (z_bin + z_bin_size/2)[:-1]
-    kde = KernelDensity(kernel="gaussian", bandwidth=50).fit(z_coordinates_sub[:,np.newaxis])
+    kde = KernelDensity(kernel="gaussian", bandwidth=2).fit(z_coordinates_sub[:,np.newaxis])
     log_dens = kde.score_samples(z_bin_mid)
     pdf = np.exp(log_dens)
     # ax.fill(pos_z[:, 0], pdf, fc="#AAAAFF")
@@ -160,10 +230,22 @@ for i in range(7):
     df = DataFrame({"r min":bins[0:-1], "r max":bins[1:], "DD count":DD_count, "DR count":DR_count, "RR count": RR_count, "Landy Szalay":LandSzal2pcf, "Pois Error":pois_err})
 
     #Save the data to a file
-    df.to_csv(DATA_DIRECTORY + 'MBII_lc1e91e12_corrfunc_z{}.csv'.format(redshifts[i]), index=False)
+    df.to_csv(DATA_DIRECTORY + '{}_MBII_lc1e91e12_corrfunc_z{}.csv'.format(unique_id, redshifts[i]), index=False)
 
     corrfunc_data.append(df)
     print("Correlation function at redshift {} done.".format(redshifts[i]))
+    print("Number of data points: {}".format(n_D))
+
+    # Plot the z_coordinates_sub histogram along with the rand_z histogram both normalized.
+    plt.figure()
+    plt.hist(z_coordinates_sub, bins=50, density=True, alpha=0.5, label='Data')
+    plt.hist(rand_z, bins=50, density=True, alpha=0.5, label='Random')
+    plt.xlabel('z')
+    plt.ylabel('Normalized counts')
+    plt.legend(title= 'z = {}'.format(redshifts[i]))
+    plt.grid(visible=False)
+    plt.gca().set_box_aspect(1)
+    plt.savefig(PLOT_DIRECTORY + '{}_MBII_lc_1e91e12_z{}_hist.pdf'.format(unique_id, redshifts[i]))
 
 # Plot the correlation function
 plt.style.use('MNRAS_Style.mplstyle')
@@ -182,4 +264,4 @@ plt.grid(visible=False)
 plt.gca().set_box_aspect(1)
 
 # Save this plot as a pdf to Plot directory
-plt.savefig(PLOT_DIRECTORY + 'MBII_lc1e91e12_corrfunc.pdf')
+plt.savefig(PLOT_DIRECTORY + '{}_MBII_lc1e91e12_corrfunc.pdf'.format(unique_id))

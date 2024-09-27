@@ -9,6 +9,7 @@ from astropy.cosmology import FlatLambdaCDM
 from Corrfunc.theory.DD import DD
 from matplotlib.patches import Rectangle
 from pandas import DataFrame
+from sklearn.neighbors import KernelDensity
 
 plt.style.use('MNRAS_Style.mplstyle')
 
@@ -19,10 +20,10 @@ cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 h = 0.7
 
 # Define the path to data directory
-DATA_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/"
+DATA_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data2.0/"
 
 # Save the plot as a pdf file
-PLOT_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots/"
+PLOT_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots2.0/"
 
 
 file_paths = ['/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/bhprops_034.txt',
@@ -92,6 +93,32 @@ for i,file_path in enumerate(file_paths):
     rand_y = np.random.uniform(min_y, max_y, n_rand)
     rand_z = np.random.uniform(min_z, max_z, n_rand)
 
+    #-------------------------------------------------------------------------------------------
+    #Drawing random numbers for z from smoothed distribution of the data z vals
+
+    # z_bin_size = 0.1
+    # z_bin = np.arange(np.min(bh_pos_z), np.max(bh_pos_z), z_bin_size)[:,np.newaxis]
+    # z_bin_mid = (z_bin + z_bin_size/2)[:-1]
+    # kde = KernelDensity(kernel="gaussian", bandwidth=2).fit(bh_pos_z[:,np.newaxis])
+    # log_dens = kde.score_samples(z_bin_mid)
+    # pdf = np.exp(log_dens)
+    # # ax.fill(pos_z[:, 0], pdf, fc="#AAAAFF")
+    # cdf = np.cumsum(pdf)
+    # cdf = cdf / np.max(cdf)
+    # cdf = np.insert(cdf, 0, 0)
+
+    # z_bin = z_bin.flatten()
+    # z_bin_mid = z_bin_mid.flatten()
+
+    # uni_val = np.random.rand(n_rand)
+    # bin_indices = np.searchsorted(cdf, uni_val)
+    # bin_edges = z_bin[bin_indices - 1]
+    # bin_diff = z_bin[bin_indices] - z_bin[bin_indices-1]
+    # bin_weights = (uni_val - cdf[bin_indices-1]) / (cdf[bin_indices] - cdf[bin_indices-1])
+    # rand_z = bin_edges + bin_weights * bin_diff
+
+    ## ---------------------------------------------------------------------------------------------------------------------------------------------------
+
     bins = np.logspace(start=np.log10(1.9868), stop=np.log10(314.915), num=23) #np.arange(0.01, 100, bin_size)
     bin_mids = (bins[0:-1] + bins[1:])/2
 
@@ -127,6 +154,21 @@ for i,file_path in enumerate(file_paths):
     df.to_csv(DATA_DIRECTORY + 'MBII_1e91e12_corrfunc_z{}.csv'.format(redshifts[i]), index=False)
 
     corrfunc_data.append(df)
+
+    print("Number of data points: {}".format(n_D))
+
+    # Plot the z_coordinates_sub histogram along with the rand_z histogram both normalized.
+    plt.figure()
+    plt.hist(bh_pos_z, bins=50, density=True, alpha=0.5, label='Data')
+    plt.hist(rand_z, bins=50, density=True, alpha=0.5, label='Random')
+    plt.xlabel('z')
+    plt.ylabel('Normalized counts')
+    # Put the legends outside the plot
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), title= 'z = {}'.format(redshifts[i]))
+    plt.grid(visible=False)
+    plt.gca().set_box_aspect(1)
+    plt.savefig(PLOT_DIRECTORY + 'MBII_coeval_1e91e12_z{}_hist.pdf'.format(redshifts[i]))
+    # plt.show()
 
 # Plot the correlation functions    
 
@@ -190,4 +232,4 @@ plt.gca().set_box_aspect(1)
 
 plt.savefig(PLOT_DIRECTORY + 'MBII_1e91e12_corrfunc.pdf')
 
-plt.show()
+# plt.show()

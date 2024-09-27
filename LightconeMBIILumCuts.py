@@ -12,12 +12,22 @@ from scipy.interpolate import interp1d
 from astropy.cosmology import FlatLambdaCDM
 # Import the LogNorm object
 from matplotlib.colors import LogNorm
+# For passing system arguments
+import sys
+
+def lightcone_rounder(x):
+    return int(np.round(x + np.random.rand() - 0.5))
+# vectorize the function
+lightcone_rounder = np.vectorize(lightcone_rounder)
 
 # Define the data directory
-DATA_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/"
+DATA_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data2.0/"
 
 # Define the plot directory
-PLOT_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots/"
+PLOT_DIRECTORY = "/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Plots2.0/"
+
+# Unique identifier for output files
+unique_id = sys.argv[3]
 
 # Define the cosmology
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -39,13 +49,16 @@ file_paths = ['/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/bhpr
 nz_arrays = []
 
 # defining the luminosity bin
-min_lum = 1e9
-max_lum = 1e12
+formatted_min_lum = sys.argv[1] #1e9
+formatted_max_lum = sys.argv[2] #1e12
+
+min_lum = float(formatted_min_lum)
+max_lum = float(formatted_max_lum)
 
 # format the min_lum in order to use in plot and file names.
 # Convert the number to scientific notation and replace 'e+' with 'e'
-formatted_min_lum = "{:.0e}".format(min_lum).replace('e+0', 'e').replace('e+','e')
-formatted_max_lum = "{:.0e}".format(max_lum).replace('e+0', 'e').replace('e+','e')
+# formatted_min_lum = "{:.0e}".format(min_lum).replace('e+0', 'e').replace('e+','e')
+# formatted_max_lum = "{:.0e}".format(max_lum).replace('e+0', 'e').replace('e+','e')
 
 BH_density = []
 
@@ -115,6 +128,7 @@ red_com = cosmo.comoving_distance(redshifts).value * h
 
 # Calculate the comoving distances
 new_z_axis = cosmo.comoving_distance(redshifts).value * h  # Convert to h^-1 Mpc
+# look_back_time_axis = cosmo.lookback_time(redshifts).value
 
 # These are the slice centers in the z direction for each redshift slice.
 
@@ -134,6 +148,7 @@ pixel_size_z = (z_range[1] - z_range[0]) / num_pixels_z
 # Define the new z axis which has the resolution of the simulation box.
 
 new_z_axis = np.arange(new_z_axis[0], new_z_axis[-1], pixel_size_z)
+# look_back_time_axis = cosmo.lookback_time(new_z_axis).value
 
 # Create an empty 3d array with shape same as the simulation along x and y
 # and the length of the new z axis.
@@ -217,15 +232,15 @@ plane_points = create_rotated_plane(normal_vector, plane_center, num_pixels_plan
 
 # Find the values from the simulation box corresponding to the plane.
 # grid wrap is used to apply periodic boundary conditions
-for i, r in enumerate(new_z_axis):
+for i, t in enumerate(new_z_axis):
         # print(np.shape(plane_points))
-        Lightcone[:,:,i] = map_coordinates(sim_evolv_linear(r), plane_points, order=1, mode='grid-wrap')
+        Lightcone[:,:,i] = map_coordinates(sim_evolv_linear(t), plane_points, order=1, mode='grid-wrap')
 
         # move the plane points along the normal vector by pixel_size_z.
         plane_points = trans_plane_points(normal_vector, plane_points)
 
 # Save the lightcone to a file
-np.save(DATA_DIRECTORY + 'Lightcone_lumcut{}{}.npy'.format(formatted_min_lum, formatted_max_lum), Lightcone)    
+np.save(DATA_DIRECTORY + '{}_Lightcone_lumcut{}{}.npy'.format(unique_id, formatted_min_lum, formatted_max_lum), Lightcone)    
 
 # Calculate the number density on lightcone
 number_density = np.sum(Lightcone, axis=(0, 1)) / volume
@@ -262,7 +277,7 @@ plt.xticks(red_com, redshifts + 1)
 plt.xlabel('z + 1')
 
 # Save the figure to the plots directory
-plt.savefig(PLOT_DIRECTORY + 'NumberDensityLightcone_lumcut{}{}.pdf'.format(formatted_min_lum, formatted_max_lum))
+plt.savefig(PLOT_DIRECTORY + '{}_NumberDensityLightcone_lumcut{}{}.pdf'.format(unique_id, formatted_min_lum, formatted_max_lum))
 
 plt.show()
 
@@ -327,50 +342,50 @@ ax2.set_xlim(ax.get_xlim())
 ax2.set_xlabel(r'comoving distance ($h^{-1}$cMpc)')
 
 # Save the figure to a pdf file
-plt.savefig(PLOT_DIRECTORY + 'Lightcone2d_lumcut{}{}.pdf'.format(formatted_min_lum, formatted_max_lum))
+plt.savefig(PLOT_DIRECTORY + '{}_Lightcone2d_lumcut{}{}.pdf'.format(unique_id, formatted_min_lum, formatted_max_lum))
 
-plt.show()
+# plt.show()
 
-#---
+# #---
 
-# Making the catalog of the lightcone
-# Define the number of black holes in each pixel
-n_bh = np.copy(Lightcone)
+# # Making the catalog of the lightcone
+# # Define the number of black holes in each pixel
+# n_bh = np.copy(lightcone_rounder(Lightcone))
 
-# Initialize an empty list to store the black hole coordinates
-bh_coordinates = []
+# # Initialize an empty list to store the black hole coordinates
+# bh_coordinates = []
 
-# Calculate the number of slices
-new_num_slices = len(new_z_axis)
+# # Calculate the number of slices
+# new_num_slices = len(new_z_axis)
 
-# Define the pixel centers
-pixel_centers_x = np.linspace(x_range[0] + pixel_size_x / 2, x_range[1] - pixel_size_x / 2, num_pixels_x)
-pixel_centers_y = np.linspace(y_range[0] + pixel_size_y / 2, y_range[1] - pixel_size_y / 2, num_pixels_y)
-pixel_centers_z = np.copy(new_z_axis)
+# # Define the pixel centers
+# pixel_centers_x = np.linspace(x_range[0] + pixel_size_x / 2, x_range[1] - pixel_size_x / 2, num_pixels_x)
+# pixel_centers_y = np.linspace(y_range[0] + pixel_size_y / 2, y_range[1] - pixel_size_y / 2, num_pixels_y)
+# pixel_centers_z = np.copy(new_z_axis)
 
-# Iterate over the pixels and distribute the black holes
-for k in range(new_num_slices):
-    for i in range(num_pixels_x):
-        for j in range(num_pixels_y):
-            # Get the number of black holes in the current pixel
-            n = round(n_bh[i, j, k])
+# # Iterate over the pixels and distribute the black holes
+# for k in range(new_num_slices):
+#     for i in range(num_pixels_x):
+#         for j in range(num_pixels_y):
+#             # Get the number of black holes in the current pixel
+#             n = n_bh[i, j, k]
             
-            # Generate random x, y, z coordinates for the black holes in the pixel
-            x_coords = np.random.uniform(low=pixel_centers_x[i] - pixel_size_x / 2, high=pixel_centers_x[i] + pixel_size_x / 2, size=n)
-            y_coords = np.random.uniform(low=pixel_centers_y[j] - pixel_size_y / 2, high=pixel_centers_y[j] + pixel_size_y / 2, size=n)
-            z_coords = np.random.uniform(low=pixel_centers_z[k] - pixel_size_z / 2, high=pixel_centers_z[k] + pixel_size_z / 2, size=n)
+#             # Generate random x, y, z coordinates for the black holes in the pixel
+#             x_coords = np.random.uniform(low=pixel_centers_x[i] - pixel_size_x / 2, high=pixel_centers_x[i] + pixel_size_x / 2, size=n)
+#             y_coords = np.random.uniform(low=pixel_centers_y[j] - pixel_size_y / 2, high=pixel_centers_y[j] + pixel_size_y / 2, size=n)
+#             z_coords = np.random.uniform(low=pixel_centers_z[k] - pixel_size_z / 2, high=pixel_centers_z[k] + pixel_size_z / 2, size=n)
             
-            # Append the coordinates to the list
-            bh_coordinates.extend(list(zip(x_coords, y_coords, z_coords)))
+#             # Append the coordinates to the list
+#             bh_coordinates.extend(list(zip(x_coords, y_coords, z_coords)))
 
-# Convert the list of coordinates to a numpy array
-bh_coordinates = np.array(bh_coordinates)
+# # Convert the list of coordinates to a numpy array
+# bh_coordinates = np.array(bh_coordinates)
 
-# This concludes the production of the light cone. bh_coordinates now consists of the x, y, z coordinates of the black holes in the light cone, extrapolated
-# from the MBII data.
+# # This concludes the production of the light cone. bh_coordinates now consists of the x, y, z coordinates of the black holes in the light cone, extrapolated
+# # from the MBII data.
 
-# Now I want to save the bh_coordinates to a file in the data directory so that I can use it in the future.
-# I want to save the numpy array to a file using np.save() function.
+# # Now I want to save the bh_coordinates to a file in the data directory so that I can use it in the future.
+# # I want to save the numpy array to a file using np.save() function.
 
-# Save the bh_coordinates to a file
-np.save(DATA_DIRECTORY + 'bh_coordinates_lightcone_lumcut{}{}.npy'.format(formatted_min_lum, formatted_max_lum), bh_coordinates)
+# # Save the bh_coordinates to a file
+# np.save(DATA_DIRECTORY + 'bh_coordinates_lightcone_lumcut{}{}.npy'.format(formatted_min_lum, formatted_max_lum), bh_coordinates)
