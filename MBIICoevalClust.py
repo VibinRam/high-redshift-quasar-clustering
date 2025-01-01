@@ -39,8 +39,13 @@ redshifts = np.array([4, 5, 6, 7, 8, 9, 10])
 corrfunc_data = []
 
 # defining the luminosity bin
-min_lum = 1e9
+min_lum = 1e11
 max_lum = 1e12
+
+# format the min_lum in order to use in plot and file names.
+# Convert the number to scientific notation and replace 'e+' with 'e'
+formatted_min_lum = "{:.0e}".format(min_lum).replace('e+0', 'e').replace('e+','e')
+formatted_max_lum = "{:.0e}".format(max_lum).replace('e+0', 'e').replace('e+','e')
 
 for i,file_path in enumerate(file_paths):
     # Load the data from the file
@@ -151,7 +156,7 @@ for i,file_path in enumerate(file_paths):
     df = DataFrame({"r min":bins[0:-1], "r max":bins[1:], "DD count":DD_count, "DR count":DR_count, "RR count": RR_count, "Landy Szalay":LandSzal2pcf, "Pois Error":pois_err})
 
     #Save the data to a file
-    df.to_csv(DATA_DIRECTORY + 'MBII_1e91e12_corrfunc_z{}.csv'.format(redshifts[i]), index=False)
+    df.to_csv(DATA_DIRECTORY + 'MBII_{}{}_corrfunc_z{}.csv'.format(formatted_min_lum, formatted_max_lum, redshifts[i]), index=False)
 
     corrfunc_data.append(df)
 
@@ -167,7 +172,7 @@ for i,file_path in enumerate(file_paths):
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), title= 'z = {}'.format(redshifts[i]))
     plt.grid(visible=False)
     plt.gca().set_box_aspect(1)
-    plt.savefig(PLOT_DIRECTORY + 'MBII_coeval_1e91e12_z{}_hist.pdf'.format(redshifts[i]))
+    plt.savefig(PLOT_DIRECTORY + 'MBII_coeval_{}{}_z{}_hist.pdf'.format(formatted_min_lum, formatted_max_lum, redshifts[i]))
     # plt.show()
 
 # Plot the correlation functions    
@@ -230,6 +235,6 @@ plt.legend(legend_list, legend_labels, loc='center left', bbox_to_anchor=(1, 0.5
 plt.grid(visible=False)
 plt.gca().set_box_aspect(1)
 
-plt.savefig(PLOT_DIRECTORY + 'MBII_1e91e12_corrfunc.pdf')
+plt.savefig(PLOT_DIRECTORY + 'MBII_{}{}_corrfunc.pdf'.format(formatted_min_lum, formatted_max_lum))
 
 # plt.show()
