@@ -279,7 +279,7 @@ plt.xlabel('z + 1')
 # Save the figure to the plots directory
 plt.savefig(PLOT_DIRECTORY + '{}_NumberDensityLightcone_lumcut{}{}.pdf'.format(unique_id, formatted_min_lum, formatted_max_lum))
 
-plt.show()
+# plt.show()
 
 # sum over the x axis to get the 2d projection of the lightcone.
 Lightcone_2d = np.average(Lightcone[25:30,:,:], axis=0) #np.sum(Lightcone, axis=0)
