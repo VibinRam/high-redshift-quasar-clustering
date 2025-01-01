@@ -64,7 +64,7 @@ pixel_centers_z = np.copy(new_z_axis)
 #--------------------------------------------------------------------------------------------------------------
 
 # Import the lightcone data
-Lightcone = np.load('/home/vibin/MyFolder/WorkDesk/DP2/PhdProjects/Complicor/Data/MBIIbhIncompOverlf/{}_Lightcone_lumcut1e91e12.npy'.format(unique_id))
+Lightcone = np.load(DATA_DIRECTORY + '{}_Lightcone_lumcut1e91e12.npy'.format(unique_id))
 
 # Making the catalog of the lightcone
 # Define the number of black holes in each pixel
@@ -122,7 +122,7 @@ z_coordinates_array[0] = z_coordinates[ind4]
 # For the case of 5 to 9 redshifts
 # comoving distance at redshift 5 to 9
 for i in range(5):
-    com_dist_start = red_com[i+1]
+    com_dist_start = red_com[i+1] - 50 # Box is centered at the comoving distance of the redshift
     com_dist_end = com_dist_start + 100
 
     # find the indices of the black holes that are within the box
