@@ -17,7 +17,7 @@ redshifts = np.array([4, 5, 6, 7, 8, 9, 10])
 # Load the correlation function data
 corrfunc_data = []
 for i in redshifts:
-    corrfunc_data.append(pd.read_csv(DATA_DIRECTORY + 'MBII_corrfunc_z{}.csv'.format(i)))
+    corrfunc_data.append(pd.read_csv(DATA_DIRECTORY + 'MBII_1e91e12_corrfunc_z{}.csv'.format(i)))
 
 # Find the midpoint of each bin, as r_mid = (r_min + r_max) / 2
 for i in range(len(redshifts)):
@@ -65,6 +65,6 @@ for i, redshift in enumerate(redshifts):
     plt.tick_params(axis='x', pad=10)
 
     # Save the figure as a pdf
-    plt.savefig(PLOT_DIRECTORY + 'MBII_corrfunc_z{}.pdf'.format(redshift), bbox_inches='tight')
+    plt.savefig(PLOT_DIRECTORY + 'MBII_1e91e12_corrfunc_z{}.pdf'.format(redshift), bbox_inches='tight')
 
     plt.show()
