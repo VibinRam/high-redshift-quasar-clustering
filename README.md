@@ -90,7 +90,7 @@ The repository includes analyses related to:
 
 Example correlation function measurements for high-redshift quasar populations across multiple redshift bins.
 
-![Correlation Function](plots/MBII_corrfunc.pdf)
+![Correlation Function](plots/MBII_corrfunc.png)
 
 ---
 
