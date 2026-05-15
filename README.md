@@ -98,7 +98,7 @@ Example correlation function measurements for high-redshift quasar populations a
 
 Example lightcone construction and analysis from cosmological simulations.
 
-![Lightcone Analysis](plots/Lightcone2d.png)
+![Lightcone Analysis](plots/Lightcone2D.png)
 
 ---
 
