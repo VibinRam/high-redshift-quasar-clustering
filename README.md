@@ -96,9 +96,9 @@ Example correlation function measurements for high-redshift quasar populations a
 
 ## Lightcone Luminosity Analysis
 
-Example luminosity-dependent lightcone analysis from cosmological simulations.
+Example lightcone construction and analysis from cosmological simulations.
 
-![Lightcone Analysis](plots/Lightcone2d.pdf)
+![Lightcone Analysis](plots/Lightcone2d.png)
 
 ---
 
@@ -106,7 +106,7 @@ Example luminosity-dependent lightcone analysis from cosmological simulations.
 
 Correlation function measurements derived from simulated lightcone catalogues.
 
-![Lightcone Correlation](plots/MBII_lc_corrfunc_z4.pdf)
+![Lightcone Correlation](plots/MBII_lc_corrfunc_z4.png)
 
 ---
 
