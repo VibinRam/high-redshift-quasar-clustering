@@ -84,6 +84,30 @@ The repository includes analyses related to:
 - Lightcone luminosity studies
 - Redshift-dependent clustering behaviour
 
+# Example Results
+
+## Two-Point Correlation Function Measurements
+
+Example correlation function measurements for high-redshift quasar populations across multiple redshift bins.
+
+![Correlation Function](plots/MBII_corrfunc.pdf)
+
+---
+
+## Lightcone Luminosity Analysis
+
+Example luminosity-dependent lightcone analysis from cosmological simulations.
+
+![Lightcone Analysis](plots/Lightcone2d.pdf)
+
+---
+
+## Lightcone Correlation Function
+
+Correlation function measurements derived from simulated lightcone catalogues.
+
+![Lightcone Correlation](plots/MBII_lc_corrfunc_z4.pdf)
+
 ---
 
 # Current Status
